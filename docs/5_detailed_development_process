@@ -1,0 +1,54 @@
+Sprint 1: Project Setup & Authentication
+├── feature/project-setup
+│   ├── Initialize NestJS project
+│   ├── Configure TypeORM & PostgreSQL
+│   └── Setup project structure
+│
+├── feature/auth/user-entity
+│   ├── Create user entity
+│   └── Setup user repository
+│
+├── feature/auth/register
+│   ├── Implement register endpoint
+│   └── Add validation & hashing
+│
+└── feature/auth/login-logout
+    ├── Implement JWT strategy
+    ├── Add login endpoint
+    └── Add logout functionality
+
+Sprint 2: Course Management
+├── feature/course/course-entity
+│   ├── Create course & lesson entities
+│   └── Setup relationships
+│
+├── feature/course/crud-operations
+│   ├── Add course CRUD endpoints
+│   └── Implement admin guards
+│
+└── feature/course/video-upload
+    ├── Setup AWS S3
+    └── Implement video upload
+
+Sprint 3: Payment & Access Control
+├── feature/payment/transaction-entity
+│   ├── Create transaction entity
+│   └── Setup payment flow
+│
+├── feature/payment/payment-integration
+│   ├── Integrate payment gateway
+│   └── Handle webhooks
+│
+└── feature/video/access-control
+    ├── Implement video access guards
+    └── Setup streaming service
+
+Sprint 4: Admin Features & Testing
+├── feature/admin/dashboard
+│   ├── Create admin views
+│   └── Add statistics
+│
+└── feature/testing
+    ├── Add unit tests
+    ├── Add e2e tests
+    └── Performance testing

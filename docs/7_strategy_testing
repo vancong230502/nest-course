@@ -1,0 +1,5 @@
+Mỗi feature branch cần:
+- Unit tests
+- Integration tests (nếu cần)
+- E2E tests (cho các flow chính)
+- Test coverage report

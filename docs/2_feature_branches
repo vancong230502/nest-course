@@ -1,0 +1,36 @@
+feature/project-setup
+  ├── feature/database-config
+  └── feature/project-structure
+
+feature/auth
+  ├── feature/auth/user-entity
+  ├── feature/auth/register
+  ├── feature/auth/login
+  └── feature/auth/logout
+
+feature/user-management
+  ├── feature/user/profile
+  ├── feature/user/role-management
+  └── feature/user/user-settings
+
+feature/course-management
+  ├── feature/course/course-entity
+  ├── feature/course/lesson-entity
+  ├── feature/course/crud-operations
+  ├── feature/course/video-upload
+  └── feature/course/course-listing
+
+feature/admin-dashboard
+  ├── feature/admin/course-management
+  ├── feature/admin/user-management
+  └── feature/admin/statistics
+
+feature/payment
+  ├── feature/payment/transaction-entity
+  ├── feature/payment/payment-integration
+  └── feature/payment/purchase-history
+
+feature/video-access
+  ├── feature/video/streaming
+  ├── feature/video/access-control
+  └── feature/video/progress-tracking

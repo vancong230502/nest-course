@@ -1,0 +1,92 @@
+main (production)
+  └── hotfix/[version]-[issue]
+       └── Merge về main và develop
+
+
+hotfix/[version]-[issue-description]
+
+Ví dụ:
+- hotfix/1.0.1-fix-login-security
+- hotfix/1.0.2-payment-gateway-error
+- hotfix/1.0.3-video-streaming-crash
+
+
+1. Phát hiện lỗi trên production (main)
+2. Tạo nhánh hotfix từ main
+3. Sửa lỗi
+4. Test kỹ lưỡng
+5. Merge về cả main và develop
+6. Tag version mới
+7. Deploy lên production
+
+
+- Lỗi bảo mật nghiêm trọng
+  └── hotfix/1.0.1-auth-vulnerability
+
+- Lỗi thanh toán
+  └── hotfix/1.0.2-payment-processing-error
+
+- Lỗi truy cập khóa học
+  └── hotfix/1.0.3-course-access-denied
+
+- Lỗi streaming video
+  └── hotfix/1.0.4-video-playback-issue
+
+- Lỗi đăng nhập/đăng ký
+  └── hotfix/1.0.5-login-system-error
+
+
+# Tạo nhánh hotfix
+git checkout main
+git checkout -b hotfix/1.0.1-fix-login-security
+
+# Sau khi sửa xong
+git commit -m "fix: resolve login security vulnerability"
+
+# Merge vào main
+git checkout main
+git merge hotfix/1.0.1-fix-login-security
+git tag -a v1.0.1 -m "Fix login security vulnerability"
+
+# Merge vào develop
+git checkout develop
+git merge hotfix/1.0.1-fix-login-security
+
+# Xóa nhánh hotfix
+git branch -d hotfix/1.0.1-fix-login-security
+
+
+1. Unit Test
+   └── Test các thay đổi cụ thể
+
+2. Integration Test
+   └── Test tích hợp với các module liên quan
+
+3. Regression Test
+   └── Đảm bảo không ảnh hưởng tính năng khác
+
+4. Security Test (nếu cần)
+   └── Kiểm tra các lỗ hổng bảo mật
+
+
+1. Deploy to Staging
+   └── Kiểm tra trong môi trường staging
+
+2. Quick UAT (User Acceptance Testing)
+   └── Test nhanh các functionality chính
+
+3. Deploy to Production
+   └── Rolling update để không downtime
+
+4. Monitoring
+   └── Theo dõi logs và metrics sau deploy
+
+
+1. Changelog
+   └── Ghi chú các thay đổi
+
+2. Release Notes
+   └── Thông tin version mới
+
+3. Incident Report
+   └── Báo cáo sự cố và giải pháp

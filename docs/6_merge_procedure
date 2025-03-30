@@ -1,0 +1,7 @@
+1. Checkout từ develop
+2. Tạo feature branch
+3. Phát triển tính năng
+4. Tạo Pull Request
+5. Code Review
+6. Merge vào develop
+7. Delete feature branch
