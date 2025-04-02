@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Get, UseGuards, Req, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, HttpCode, HttpStatus, Query, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { Request } from 'express';
+import { Request, Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('auth')
 export class AuthController {
@@ -19,14 +20,24 @@ export class AuthController {
   }
 
   @Get('google')
-  async googleAuth() {
-    // This endpoint will be handled by GoogleStrategy
-    return;
+  async googleAuth(@Res() res: Response): Promise<void> {
+    const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?response_type=code` +
+      `&access_type=offline` +  // Yêu cầu refresh_token
+      `&prompt=consent` +       // Buộc hiển thị hộp thoại cấp quyền
+      `&redirect_uri=${encodeURIComponent(process.env.GOOGLE_CALL_BACK)}` +
+      `&scope=${encodeURIComponent('email profile')}` +
+      `&client_id=${encodeURIComponent(process.env.GOOGLE_CLIENT_ID)}`
+  
+    res.redirect(redirectUrl);
   }
 
   @Get('google/callback')
-  async googleAuthCallback(@Req() req: Request) {
-    return this.authService.validateGoogleUser(req.user);
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: any) {
+    const { user } = req;
+    console.log(user);
+    return this.authService.validateGoogleUser(user);
   }
 
   @Post('refresh')

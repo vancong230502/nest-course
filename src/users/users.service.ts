@@ -42,20 +42,29 @@ export class UsersService {
   }
 
   async createOrUpdateGoogleUser(profile: any): Promise<User> {
-    const existingUser = await this.findByEmail(profile.email);
-    if (existingUser) {
-      return existingUser;
+    try {
+      console.log('Google Profile:', profile);
+      if (!profile.email) {
+        throw new Error('Google profile does not contain an email');
+      }
+  
+      let user = await this.findByEmail(profile.email);
+      if (!user) {
+        user = this.usersRepository.create({
+          email: profile.email,
+          fullName: profile.fullName || 'Unknown', // Cần kiểm tra tránh null
+          picture: profile.picture || '',
+          isGoogleUser: true,
+        });
+        user = await this.usersRepository.save(user);
+      }
+      return user;
+    } catch (error) {
+      console.error('Error in createOrUpdateGoogleUser:', error);
+      throw new Error('Failed to create or update Google user');
     }
-
-    const user = this.usersRepository.create({
-      email: profile.email,
-      fullName: profile.fullName,
-      picture: profile.picture,
-      isGoogleUser: true,
-    });
-
-    return this.usersRepository.save(user);
   }
+  
 
   async saveRefreshToken(userId: string, refreshToken: string): Promise<void> {
     const key = `refresh_token:${userId}`;
@@ -71,4 +80,4 @@ export class UsersService {
     const key = `refresh_token:${userId}`;
     await this.redisService.del(key);
   }
-} 
+}
