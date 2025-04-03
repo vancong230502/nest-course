@@ -1,4 +1,7 @@
-import { Controller, Post, Body, Get, UseGuards, Req, HttpCode, HttpStatus, Query, Res } from '@nestjs/common';
+import { 
+  Controller, Post, Body, Get, UseGuards, Req, Res, HttpCode, HttpStatus, 
+  HttpException
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -9,37 +12,11 @@ import { AuthGuard } from '@nestjs/passport';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('register')
-  async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
-  }
+  // Hàm tiện ích để thiết lập cookie
+  private setAuthCookies(res: Response, accessToken: string, refreshToken: string) {
+    const isProd = process.env.NODE_ENV === 'production';
 
-  @Post('login')
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
-  }
-
-  @Get('google')
-  async googleAuth(@Res() res: Response): Promise<void> {
-    const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
-      `?response_type=code` +
-      `&access_type=offline` +  // Yêu cầu refresh_token
-      `&prompt=consent` +       // Buộc hiển thị hộp thoại cấp quyền
-      `&redirect_uri=${encodeURIComponent(process.env.GOOGLE_CALL_BACK)}` +
-      `&scope=${encodeURIComponent('email profile')}` +
-      `&client_id=${encodeURIComponent(process.env.GOOGLE_CLIENT_ID)}`
-  
-    res.redirect(redirectUrl);
-  }
-
-  @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
-    const { user } = req;
-    const token = await this.authService.validateGoogleUser(user);
-    
-    // Set cookies với đầy đủ options
-    res.cookie('accessToken', token.accessToken, {
+    res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // true trong production, false trong development
       sameSite: 'lax',
@@ -48,7 +25,7 @@ export class AuthController {
       domain: '127.0.0.1'
     });
 
-    res.cookie('refreshToken', token.refreshToken, {
+    res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -56,29 +33,66 @@ export class AuthController {
       path: '/',
       domain:'127.0.0.1'
     });
+  }
 
-    // Chuẩn bị user data để gửi về Next.js
-    const userData = {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      picture: user.picture
-    };
+  @Post('register')
+  async register(@Body() registerDto: RegisterDto, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken, user } = await this.authService.register(registerDto);
+    console.log(accessToken, refreshToken, user)
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return { user };
+  }
 
-    // Chuyển hướng về Next.js với user data
-    const nextUrl = `${process.env.NEXT_APP_URL}/auth/success?user=${encodeURIComponent(JSON.stringify(userData))}`;
-    res.redirect(nextUrl);
+  @Post('login')
+  async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken, user } = await this.authService.login(loginDto);
+    this.setAuthCookies(res, accessToken, refreshToken);
+    return { user };
+  }
+
+  @Get('google')
+  async googleAuth(@Res() res: Response): Promise<void> {
+    const redirectUrl = `https://accounts.google.com/o/oauth2/v2/auth` +
+      `?response_type=code` +
+      `&access_type=offline` +
+      `&prompt=consent` +
+      `&redirect_uri=${encodeURIComponent(process.env.GOOGLE_CALL_BACK)}` +
+      `&scope=${encodeURIComponent('email profile')}` +
+      `&client_id=${encodeURIComponent(process.env.GOOGLE_CLIENT_ID)}`;
+
+    res.redirect(redirectUrl);
+  }
+
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
+    const { user } = req;
+    const { accessToken, refreshToken } = await this.authService.validateGoogleUser(user);
+    this.setAuthCookies(res, accessToken, refreshToken);
+
+    const userData = { id: user.id, email: user.email, fullName: user.fullName, picture: user.picture };
+    res.redirect(`${process.env.NEXT_APP_URL}/auth/success?user=${encodeURIComponent(JSON.stringify(userData))}`);
   }
 
   @Post('refresh')
-  async refreshToken(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refreshToken(refreshToken);
+  async refreshToken(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) throw new HttpException('Refresh token missing', HttpStatus.UNAUTHORIZED);
+
+    const { accessToken, refreshToken: newRefreshToken } = await this.authService.refreshToken(refreshToken);
+    this.setAuthCookies(res, accessToken, newRefreshToken);
+    return { message: 'Token refreshed successfully' };
   }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')
-  async logout(@Req() req: Request) {
-    await this.authService.logout((req.user as any).id, req.headers.authorization.split(' ')[1]);
+  async logout(@Req() req: Request, @Res() res: Response) {
+    await this.authService.logout((req.user as any).id, req.cookies?.accessToken);
+
+    // Xóa cookie
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
     return { message: 'Logged out successfully' };
   }
 
