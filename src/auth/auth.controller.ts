@@ -34,10 +34,40 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req: any) {
+  async googleAuthRedirect(@Req() req: any, @Res() res: Response) {
     const { user } = req;
-    console.log(user);
-    return this.authService.validateGoogleUser(user);
+    const token = await this.authService.validateGoogleUser(user);
+    
+    // Set cookies với đầy đủ options
+    res.cookie('accessToken', token.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // true trong production, false trong development
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000, // 15 phút
+      path: '/',
+      domain: '127.0.0.1'
+    });
+
+    res.cookie('refreshToken', token.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 ngày
+      path: '/',
+      domain:'127.0.0.1'
+    });
+
+    // Chuẩn bị user data để gửi về Next.js
+    const userData = {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      picture: user.picture
+    };
+
+    // Chuyển hướng về Next.js với user data
+    const nextUrl = `${process.env.NEXT_APP_URL}/auth/success?user=${encodeURIComponent(JSON.stringify(userData))}`;
+    res.redirect(nextUrl);
   }
 
   @Post('refresh')
