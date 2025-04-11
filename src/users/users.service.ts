@@ -23,6 +23,7 @@ export class UsersService {
     const user = this.usersRepository.create({
       email,
       password: hashedPassword,
+      picture: '',
       fullName,
     });
 
@@ -43,7 +44,7 @@ export class UsersService {
 
   async createOrUpdateGoogleUser(profile: any): Promise<User> {
     try {
-      console.log('Google Profile:', profile);
+      console.log('full name:', profile.fullName);
       if (!profile.email) {
         throw new Error('Google profile does not contain an email');
       }

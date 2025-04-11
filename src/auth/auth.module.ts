@@ -19,12 +19,7 @@ import { User } from '../users/entities/user.entity';
     TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET_KEY'),
-        signOptions: { 
-          expiresIn: configService.get<string>('JWT_ACCESS_TOKEN_EXPIRATION', '15m'),
-        },
-      }),
+      useFactory: async (configService: ConfigService) => ({}), // có thể để trống
       inject: [ConfigService],
     }),
   ],
